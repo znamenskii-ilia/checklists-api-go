@@ -1,7 +1,6 @@
 package createChecklist
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -22,13 +21,10 @@ func New(checklistsRepository repositories.ChecklistsRepository) *CreateChecklis
 	return &CreateChecklistHandler{checklistsRepository: checklistsRepository}
 }
 
+type RequestDTO = dtos.CreateChecklistDto
+
 func (h *CreateChecklistHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	var dto dtos.CreateChecklistDto
-	err := json.NewDecoder(r.Body).Decode(&dto)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	dto := r.Context().Value("validatedDTO").(RequestDTO)
 
 	c := &domain.Checklist{
 		ID:    uuid.New().String(),
@@ -36,7 +32,7 @@ func (h *CreateChecklistHandler) Handle(w http.ResponseWriter, r *http.Request) 
 		Tasks: []domain.Task{},
 	}
 
-	c, err = h.checklistsRepository.CreateOne(c)
+	c, err := h.checklistsRepository.CreateOne(c)
 	if err != nil {
 		if errors.Is(err, domainErrors.ErrEntityConflict) {
 			http.Error(w, err.Error(), http.StatusConflict)
