@@ -71,6 +71,8 @@ func (r *SqliteChecklistsRepository) CreateOne(checklist *domain.Checklist) (*do
 }
 
 func (r *SqliteChecklistsRepository) FindOne(id string) (*domain.Checklist, error) {
+	row := r.db.QueryRow("SELECT id, title, created_at, updated_at, tasks FROM checklists WHERE id = ?", id)
+
 	var dbChecklist struct {
 		ID        string
 		Title     string
@@ -78,8 +80,6 @@ func (r *SqliteChecklistsRepository) FindOne(id string) (*domain.Checklist, erro
 		UpdatedAt time.Time
 		Tasks     string
 	}
-
-	row := r.db.QueryRow("SELECT id, title, created_at, updated_at, tasks FROM checklists WHERE id = ?", id)
 	if err := row.Scan(&dbChecklist.ID, &dbChecklist.Title, &dbChecklist.CreatedAt, &dbChecklist.UpdatedAt, &dbChecklist.Tasks); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domainErrors.ErrEntityNotFound
